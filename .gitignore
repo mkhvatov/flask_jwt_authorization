@@ -1,0 +1,7 @@
+/log/*
+/venv/*
+/__pycache__/*
+/logs/*
+/.idea/*
+*.log
+*.db

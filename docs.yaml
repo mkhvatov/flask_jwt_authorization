@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: Authentication and authorization API
+  description:
+  version: 2019-03-29
+servers:
+  - url: http://127.0.0.1:5000
+    description:
+paths:
+  /registration:
+    post:
+      summary: Creates a user and sends one-time password by sms; if user already exists sends new password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                msisdn:
+                  type: string
+                  format: 11 digit phone number
+                  example: "79261112233"
+      responses:
+        '201':    # In case a user does not exist
+          description: A JSON array with message # 'User with MSISDN 79261112233 was created'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '200':    # In case a user already exists
+          description: A JSON array with message # 'New password for MSISDN 79261112233 was created'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':    # In case wrong format for MSISDN
+          description: A JSON array with message # 'Wrong format for MSISDN'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':    # In case of internal errors
+          description: A JSON array with message # 'Internal error'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /login:
+    post:
+      summary: Login a user with MSISDN and one-time password; sends access and refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                msisdn:
+                  type: string
+                  format: 11 digit phone number
+                  example: "79261112233"
+                password:
+                  type: string
+                  format: 6 digit one-time password
+                  example: "123456"
+      responses:
+        '200':    # In case of success login
+          description: A JSON array with access_token, refresh_token, message # 'Logged in as 79261112233'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case user doesn't exist
+          description: A JSON array with message # 'User with MSISDN 79261112233 doesn't exist. Please register'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case password was already used
+          description: A JSON array with message # 'Your password is not valid. Please register again'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case of wrong credentials
+          description: A JSON array with message # 'Wrong credentials'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /logout:
+    post:
+      summary: Logout a user; revoke access and refresh tokens
+      security:
+        bearerAuth: [] # Use in header: Authorization: Bearer <token>
+        example: Bearer <access_token>
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  format: refresh token
+                  example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.ey...hGcBZ4bE"
+      responses:
+        '200':    # In case of success logout
+          description: A JSON array with message # 'Access and refresh tokens have been revoked'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case of expired tokens
+          description: A JSON array with message # "Token has expired"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':    # In case of internal errors
+          description: A JSON array with message # 'Internal error'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /refresh-token:
+    post:
+      summary: Refresh access token
+      security:
+        bearerAuth: [] # Use in header: Authorization: Bearer <token>
+        example: Bearer <refresh_token>
+      responses:
+        '200':    # In case of valid refresh token
+          description: A JSON array with access_token # "eyJ0eXAiO...ZeHg"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case of revoked refresh token
+          description: A JSON array with message # "Token has been revoked"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /secret:
+    get:
+      summary: Test recourse that requires to be authorized and authenticated
+      security:
+        bearerAuth: [] # Use in header: Authorization: Bearer <token>
+        example: Bearer <access_token>
+      responses:
+        '200':    # In case of valid access token
+          description: A JSON array with answer # "Secret resource is available"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':    # In case of expired access token
+          description: A JSON array with message # "Token has expired"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
